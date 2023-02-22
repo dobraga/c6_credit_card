@@ -5,10 +5,12 @@
         "99app": ["99", "pop"],
         "aliexpress": ["aliexpress"],
         "outback": ["outback"],
+        "mundial": ["mercadolivre qrmundia"],
+        "growth": ["mercadolivre growthsu"],
         "mercadolivre": ["mercadolivre"],
         "c6 store": ["pg ll"],
         "light": ["flexpag light"],
-        "ze delivery": ["dark store"]
+        "ze delivery": ["dark store", "pg ze"]
     },
     "mapping": {
         "saúde": [
@@ -20,7 +22,10 @@
             "anatoscan",
             "academia",
             "raia",
-            "werner"
+            "werner",
+            "principia",
+            "iridiumacade",
+            "growth"
         ],
         "lazer": [
             "sympla",
@@ -29,7 +34,8 @@
             "pg bus",
             "hotzone",
             "airbnb",
-            "kriok"
+            "kriok",
+            "steam"
         ],
         "comida": [
             "ze delivery",
@@ -74,7 +80,15 @@
             "camarao",
             "leme",
             "aliment",
-            "doces"
+            "doces",
+            "japartiu",
+            "macdonalds",
+            "on tap",
+            "casas pedro",
+            "grao terra",
+            "^bk",
+            "coxinha",
+            "mundial"
         ],
         "recorrente": [
             "claro",
@@ -111,10 +125,16 @@
             "americanas",
             "kabum",
             "valentinoviegas",
+            "lessini",
             "shein",
             "amigao",
             "shoppingtijucasth",
-            "comercio"
+            "comercio",
+            "mobiletech",
+            "seth",
+            "adidas",
+            "rommatian",
+            "decathlon"
         ],
         "transporte": [
             "99app",

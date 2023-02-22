@@ -46,9 +46,9 @@ class File:
             data[by] = 'total'
             agg_tot = data.groupby(by)\
                 .agg(qtd=('valor', 'count'), tot_value=('valor', 'sum'))
-            agg = pd.concat([agg, agg_tot], axis=0).round(2).reset_index()
+            agg = pd.concat([agg, agg_tot], axis=0)
 
-        return Result(agg)
+        return Result(agg.round(2).reset_index())
 
     def select(self, **kwargs) -> Result:
         data: pd.DataFrame = self._df.copy()

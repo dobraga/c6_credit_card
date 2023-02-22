@@ -37,11 +37,15 @@ def main(pasta, index, verbose, force):
     files.process(pswd, force=force)
 
     types: pd.DataFrame = files.summary_all('type').reset_index()
+    selected_types = types.\
+        sort_values('month').groupby('type').tot_value.sum().\
+        sort_values(ascending=False).head(6).index
     tps = []
     ys = []
     for t, df in types.sort_values('month').groupby('type'):
-        tps.append(t)
-        ys.append(list(df['tot_value'].values))
+        if t in selected_types:
+            tps.append(t)
+            ys.append(list(df['tot_value'].values))
 
     plot(ys=ys, legend_labels=tps, lines=True,
          title='Gastos das categorias por mês')
@@ -53,6 +57,8 @@ def main(pasta, index, verbose, force):
     top_panel.split_row(
         summary.print('Total por tipo :warning:'),
         files[index].summary('local').top(8).print('Top locais'),
+        files[index].summary('local', add_total=False).sort(
+            by='qtd', ascending=False).top(8).print('Top # locais'),
         files[index].summary('parcelas_faltantes').print('Total por parcelas'),
     )
     CONSOLE.print(Panel(Group(top_panel), title='Summary'))
@@ -64,7 +70,11 @@ def main(pasta, index, verbose, force):
             parcelas_faltantes=0, type=" != 'recorrente'").print(
             'Top compras finalizadas'),
 
-        *[files[index].select(type=tp).print(f'Top gastos {tp}') for tp in summary.data.query('type != "total"').type]
+        *[files[index].select(type=tp).print(f'Top gastos {tp}')
+          for tp in summary.data.query('type != "total"').type],
+
+        files[index].select(local="MERCADOLIVRE").print(
+            'Compras Mercado livre')
 
     ), title='Top gastos')
     CONSOLE.print(bottom_panel)

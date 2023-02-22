@@ -12,6 +12,9 @@ class Result:
     def top(self, top: int):
         return Result(self.data.head(top))
 
+    def sort(self, **kwargs):
+        return Result(self.data.sort_values(**kwargs))
+
     def print(self, title=None, show_index: bool = False,
               index_name: Optional[str] = None):
         return df_to_table(self.data, title, show_index, index_name)

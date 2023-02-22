@@ -20,6 +20,7 @@ class Mapping:
 
     def rename(self, data: pd.DataFrame) -> pd.DataFrame:
         data = data.copy()
+        data['original'] = data.local.copy()
 
         for key, regex in self._rename.items():
             mask = data.local.str.contains(regex, case=False, regex=True)
