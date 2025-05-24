@@ -3,6 +3,8 @@ from rich.layout import Layout
 from rich.console import Group
 from uniplot.uniplot import plot
 import pandas as pd
+import plotly.express as px
+# import plotly.graph_objects as go # Not immediately needed, but good to have in mind
 
 # Assuming File and Files classes are defined elsewhere and will be imported if necessary
 # from c6_credit_card.data.file import File # Will be needed by type hints and methods
@@ -98,51 +100,73 @@ def generate_html_output(
     xs_data_type,
     tps_data_type,
 ):
-    """Generates a basic HTML representation of the C6 credit card analysis."""
+    """Generates an HTML representation of the C6 credit card analysis with Plotly charts."""
     html_parts = []
 
     html_parts.append("<h1>C6 Credit Card Analysis</h1>")
     html_parts.append(f"<h2>Report for file: {file.path.name}</h2>")
-
-    # Plots - placeholder text
     html_parts.append("<h3>Plots</h3>")
-    html_parts.append("<p><b>Gastos próximos meses:</b> (Plot data not rendered in HTML)</p>")
-    # Simple table for next months
-    df_next_months = pd.DataFrame({'Month': xs_next_months, 'Value': ys_next_months})
-    html_parts.append("<h4>Gastos próximos meses (Data)</h4>")
-    html_parts.append(df_next_months.to_html(index=False, border=1))
 
-
-    html_parts.append("<p><b>Gastos por mês:</b> (Plot data not rendered in HTML)</p>")
-    df_data_total = pd.DataFrame({'Month': xs_data_total, 'Value': ys_data_total})
-    html_parts.append("<h4>Gastos por mês (Data)</h4>")
-    html_parts.append(df_data_total.to_html(index=False, border=1))
-
-    html_parts.append("<p><b>Gastos das categorias por mês:</b> (Plot data not rendered in HTML)</p>")
-    # For multi-series plot, a more complex table or multiple tables
-    html_parts.append("<h4>Gastos das categorias por mês (Data)</h4>")
-    # This is a bit tricky as ys_data_type is a list of lists.
-    # We'll create a table for each category for simplicity.
-    if tps_data_type and ys_data_type and xs_data_type and len(tps_data_type) == len(ys_data_type) and len(xs_data_type) > 0:
-        for i, cat_name in enumerate(tps_data_type):
-            if i < len(ys_data_type) and i < len(xs_data_type): # ensure indices are valid
-                df_cat = pd.DataFrame({'Month': xs_data_type[i], cat_name: ys_data_type[i]})
-                html_parts.append(f"<h5>{cat_name}</h5>")
-                html_parts.append(df_cat.to_html(index=False, border=1))
-            else:
-                html_parts.append(f"<p>Error: Data mismatch for category {cat_name}</p>")
+    # Plot 1: Gastos próximos meses
+    if xs_next_months and ys_next_months:
+        df_next_months = pd.DataFrame({'Mês': xs_next_months, 'Valor (R$)': ys_next_months})
+        fig_next_months = px.line(df_next_months, x='Mês', y='Valor (R$)', title="Gastos Próximos Meses")
+        html_parts.append(fig_next_months.to_html(full_html=False, include_plotlyjs='cdn'))
     else:
-        html_parts.append("<p>No category data or data mismatch for plotting.</p>")
+        html_parts.append("<p><b>Gastos próximos meses:</b> No data available.</p>")
+
+    # Plot 2: Gastos por mês
+    if xs_data_total and ys_data_total:
+        df_data_total = pd.DataFrame({'Mês': xs_data_total, 'Valor (R$)': ys_data_total})
+        fig_data_total = px.line(df_data_total, x='Mês', y='Valor (R$)', title="Gastos por Mês")
+        html_parts.append(fig_data_total.to_html(full_html=False, include_plotlyjs='cdn'))
+    else:
+        html_parts.append("<p><b>Gastos por mês:</b> No data available.</p>")
+
+    # Plot 3: Gastos das categorias por mês
+    if tps_data_type and ys_data_type and xs_data_type:
+        try:
+            # Create a common index of all unique months, sorted
+            all_months_set = set()
+            for month_list in xs_data_type:
+                if month_list: # Ensure month_list is not empty
+                    all_months_set.update(month_list)
+            
+            if all_months_set: # Proceed if there are any months
+                all_months_sorted = sorted(list(all_months_set))
+                plot_data_type_df = pd.DataFrame(index=all_months_sorted)
+                plot_data_type_df.index.name = 'Mês'
+
+                for i, category_name in enumerate(tps_data_type):
+                    if i < len(ys_data_type) and i < len(xs_data_type) and xs_data_type[i] and ys_data_type[i]:
+                        # Create a temporary series for the current category
+                        s = pd.Series(ys_data_type[i], index=xs_data_type[i], name=category_name)
+                        # Map to the common index; this aligns data and introduces NaNs where a category doesn't have data for a month
+                        plot_data_type_df[category_name] = plot_data_type_df.index.map(s)
+                
+                # Fill NaNs - if a category doesn't exist for a month, it will be 0 after ffill/bfill then fillna(0)
+                # Or, decide on a different strategy like interpolate or leave as NaN for Plotly to handle
+                plot_data_type_df = plot_data_type_df.ffill().bfill().fillna(0) # Fill remaining NaNs with 0
+                
+                if not plot_data_type_df.empty:
+                    plot_data_type_df_melted = plot_data_type_df.reset_index().melt(
+                        id_vars='Mês', var_name='Category', value_name='Valor (R$)'
+                    )
+                    fig_types = px.line(plot_data_type_df_melted, x='Mês', y='Valor (R$)', color='Category', title="Gastos das Categorias por Mês")
+                    html_parts.append(fig_types.to_html(full_html=False, include_plotlyjs='cdn'))
+                else:
+                    html_parts.append("<p><b>Gastos das categorias por mês:</b> Processed data frame is empty.</p>")
+            else:
+                html_parts.append("<p><b>Gastos das categorias por mês:</b> No month data available for categories.</p>")
+        except Exception as e:
+            html_parts.append(f"<p><b>Gastos das categorias por mês:</b> Error generating plot: {e}</p>")
+            # Log the error for debugging if a logger is available
+    else:
+        html_parts.append("<p><b>Gastos das categorias por mês:</b> No data available.</p>")
 
 
-    # Summaries
+    # Summaries (remain as HTML tables)
     html_parts.append("<h3>Summary</h3>")
-
-    # Top Panel content
-    # Replicating rich panel structure is complex. We'll use underlying data.
-    # file.summary returns a Summary object which has a .data (pandas DF) and a .print method
-    # We will try to access .data for HTML conversion.
-
     summary_type_df = file.summary("type").data
     html_parts.append("<h4>Total por tipo</h4>")
     html_parts.append(summary_type_df.to_html(index=False, border=1))
@@ -159,9 +183,8 @@ def generate_html_output(
     html_parts.append("<h4>Total por parcelas</h4>")
     html_parts.append(summary_parcelas_df.to_html(index=False, border=1))
 
-    # Bottom Panel content
+    # Bottom Panel content (remain as HTML tables)
     html_parts.append("<h3>Top Gastos</h3>")
-
     tot_avista = file.select(parcelas_faltantes=0, parcela=0, type=" != 'recorrente'")
     html_parts.append(f"<h4>Compras parceladas: R${file.select(parcelas_faltantes=' > 0', type=' != recorrente').data.valor.sum():,.2f}</h4>")
     html_parts.append(tot_avista.top(10).data.to_html(index=False, border=1))
