@@ -1,27 +1,45 @@
-[tool.poetry]
+[project]
 name = "c6-credit-card"
 version = "0.1.0"
 description = ""
-authors = ["Douglas Braga <30268535+dobraga@users.noreply.github.com>"]
-packages = [
-    { include = "c6_credit_card", from = "./" },
+authors = [
+    {name = "Douglas Braga", email = "30268535+dobraga@users.noreply.github.com"}
+]
+requires-python = ">=3.9"
+dependencies = [
+    "tabula-py>=2.5.1",
+    "python-dotenv>=0.21.0",
+    "rich>=12.6.0",
+    "click>=8.1.3",
+    "uniplot>=0.14.1",
+    "pyarrow>=10.0.1",
+    "numpy<2",
 ]
 
-[tool.poetry.dependencies]
-python = "^3.9"
-tabula-py = "^2.5.1"
-python-dotenv = "^0.21.0"
-rich = "^12.6.0"
-click = "^8.1.3"
-uniplot = "^0.14.1"
-pyarrow = "^10.0.1"
-numpy = "<2"
+[project.scripts]
+c6_credit_card = "c6_credit_card.__main__:main"
 
-[tool.poetry.dev-dependencies]
-pytest = "*"
-autopep8 = "^2.0.0"
-ipykernel = "^6.18.3"
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "autopep8>=2.0.0",
+    "ipykernel>=6.18.3",
+]
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools>=61.0"] # Specify setuptools as the build system
+build-backend = "setuptools.build_meta"
+backend-path = ["."] # Ensure setuptools can find its backend utilities
+
+[tool.setuptools.packages.find]
+# This explicitly tells setuptools where to find packages.
+# We are looking for packages in the current directory '.'.
+# We only want to include 'c6_credit_card' and its subpackages.
+where = ["."]
+include = ["c6_credit_card*"]
+exclude = ["tests*", "data"] # Exclude the top-level 'data' directory from packaging
+
+# The following line is an alternative way to explicitly list packages
+# if auto-discovery with 'find' is not preferred or causes issues.
+# [tool.setuptools]
+# packages = ["c6_credit_card"]

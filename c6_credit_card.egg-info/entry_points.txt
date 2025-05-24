@@ -1,0 +1,2 @@
+[console_scripts]
+c6_credit_card = c6_credit_card.__main__:main
