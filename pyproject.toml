@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "c6-credit-card"
+version = "0.1.0"
+description = ""
+authors = ["Douglas Braga <30268535+dobraga@users.noreply.github.com>"]
+packages = [
+    { include = "c6_credit_card", from = "./" },
+]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+tabula-py = "^2.5.1"
+python-dotenv = "^0.21.0"
+rich = "^12.6.0"
+click = "^8.1.3"
+uniplot = "^0.14.1"
+pyarrow = "^10.0.1"
+numpy = "<2"
+
+[tool.poetry.dev-dependencies]
+pytest = "*"
+autopep8 = "^2.0.0"
+ipykernel = "^6.18.3"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
