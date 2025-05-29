@@ -1,5 +1,5 @@
-from os import getenv
 from logging import getLogger
+from os import getenv
 
 import numpy as np
 import pandas as pd
@@ -8,6 +8,7 @@ from c6_credit_card.data.file import File
 from c6_credit_card.data.files import Files
 
 LOG = getLogger(__name__)
+
 
 def read_files(pasta, force):
     files = Files(pasta)
@@ -45,16 +46,16 @@ def plot_next_months(file: File):
     for idx, value in parcelas.items():
         arr[idx] = value
 
-    parcelas = pd.Series(arr[1:], name="parcelas_faltantes").ffill().fillna(0) # Added fillna(0)
+    parcelas = pd.Series(arr[1:], name="parcelas_faltantes").ffill().fillna(0)
 
     parcelas_rec = parcelas + recorrentes
 
-    print(f"total parcelas: R${parcelas.sum():,.2f} | recorrente: R${recorrentes:,.2f}")
-    print(
-        pd.DataFrame(
-            {"parcelas": parcelas, "recorrente": recorrentes, "total": parcelas_rec}
-        )
-    )
+    # print(f"total parcelas: R${parcelas.sum():,.2f} | recorrente: R${recorrentes:,.2f}")
+    # print(
+    #     pd.DataFrame(
+    #         {"parcelas": parcelas, "recorrente": recorrentes, "total": parcelas_rec}
+    #     )
+    # )
 
     ys = parcelas_rec.values.tolist()
     xs = parcelas_rec.index.tolist()
