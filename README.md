@@ -18,9 +18,8 @@ This project now uses [UV](https://github.com/astral-sh/uv) for package manageme
 3.  **Install Dependencies:**
     Once UV is installed and your virtual environment is active, install the project and its dependencies:
     ```sh
-    uv pip install -e .[dev]
+    uv sync
     ```
-    This installs the package in editable mode (`-e`) along with the development dependencies (`[dev]`).
 
 ## Usage
 
@@ -28,18 +27,10 @@ After installation, you can run the application using the script defined in `pyp
 
 To see the help message:
 ```sh
-c6_credit_card --help
-```
-Or using `uv run`:
-```sh
 uv run c6_credit_card --help
 ```
 
 To process bills from a specific folder (e.g., `data/`):
-```sh
-c6_credit_card -p data/
-```
-Or using `uv run`:
 ```sh
 uv run c6_credit_card -p data/
 ```

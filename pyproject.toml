@@ -14,8 +14,8 @@ dependencies = [
     "uniplot>=0.14.1",
     "pyarrow>=10.0.1",
     "numpy<2",
-    "pandas>=1.0", # Added pandas
-    "plotly",      # Added plotly
+    "pandas==2.2.3",
+    "plotly==6.1.2",
 ]
 
 [project.scripts]
@@ -29,19 +29,11 @@ dev = [
 ]
 
 [build-system]
-requires = ["setuptools>=61.0"] # Specify setuptools as the build system
+requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
-backend-path = ["."] # Ensure setuptools can find its backend utilities
+backend-path = ["."]
 
 [tool.setuptools.packages.find]
-# This explicitly tells setuptools where to find packages.
-# We are looking for packages in the current directory '.'.
-# We only want to include 'c6_credit_card' and its subpackages.
 where = ["."]
 include = ["c6_credit_card*"]
-exclude = ["tests*", "data"] # Exclude the top-level 'data' directory from packaging
-
-# The following line is an alternative way to explicitly list packages
-# if auto-discovery with 'find' is not preferred or causes issues.
-# [tool.setuptools]
-# packages = ["c6_credit_card"]
+exclude = ["tests*", "data"]
