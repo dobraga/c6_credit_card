@@ -60,7 +60,6 @@ def main(pasta, index, verbose, force, output_format):
         display_terminal_output(
             CONSOLE=Console(),
             file=file,
-            files=files,
             ys_next_months=ys_next_months,
             xs_next_months=xs_next_months,
             ys_data_total=ys_data_total,
@@ -73,7 +72,6 @@ def main(pasta, index, verbose, force, output_format):
     elif output_format == "html":
         html_content = generate_html_output(
             file=file,
-            files=files,
             ys_next_months=ys_next_months,
             xs_next_months=xs_next_months,
             ys_data_total=ys_data_total,
@@ -84,7 +82,6 @@ def main(pasta, index, verbose, force, output_format):
             # plot_gastos_por_dia_data=plot_gastos_por_dia_data, # Pass if used
         )
         Path("report.html").write_text(html_content)
-        print(html_content)
     else:
         LOG.error(f"Unknown output format: {output_format}")
 
