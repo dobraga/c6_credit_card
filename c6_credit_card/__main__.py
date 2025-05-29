@@ -32,7 +32,7 @@ filterwarnings(action="ignore", category=UserWarning)
     "--output-format",
     "-o",
     type=click.Choice(["terminal", "html"], case_sensitive=False),
-    default="terminal",
+    default="html",
     help="Output format.",
 )
 def main(pasta, index, verbose, force, output_format):
