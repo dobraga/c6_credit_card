@@ -1,14 +1,38 @@
 # c6_credit_card
 
-Explore credit card bills from C6 in terminal. 
+Explore credit card bills from C6 in terminal.
 
+## Setup and Installation
 
+This project now uses [UV](https://github.com/astral-sh/uv) for package management and execution.
+
+1.  **Install UV:**
+    Follow the instructions on the [official UV installation guide](https://github.com/astral-sh/uv#installation).
+
+2.  **Create a Virtual Environment (Recommended):**
+    ```sh
+    python -m venv .venv
+    source .venv/bin/activate  # On Windows use `.venv\Scripts\activate`
+    ```
+
+3.  **Install Dependencies:**
+    Once UV is installed and your virtual environment is active, install the project and its dependencies:
+    ```sh
+    uv sync
+    ```
+
+## Usage
+
+After installation, you can run the application using the script defined in `pyproject.toml`:
+
+To see the help message:
 ```sh
-poetry run python c6_credit_card --help
+uv run c6_credit_card --help
 ```
 
+To process bills from a specific folder (e.g., `data/`):
 ```sh
-poetry run python c6_credit_card -p data/
+uv run c6_credit_card -p data/
 ```
 
 ![exemplo](doc/example.png)
