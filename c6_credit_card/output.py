@@ -133,6 +133,14 @@ def generate_html_output(
     tot_fin = file.select(parcela=" > 0", parcelas_faltantes=0, type=" != 'recorrente'")
     tot_fin_val = tot_fin.data.valor.sum() if not tot_fin.data.empty else 0
 
+    tot_recorrente = file.select(type="recorrente")
+    tot_recorrente_val = (
+        tot_recorrente.data.valor.sum() if not tot_recorrente.data.empty else 0
+    )
+    tot_recorrente_qty = (
+        len(tot_recorrente.data) if not tot_recorrente.data.empty else 0
+    )
+
     total_transactions = len(file._df)
 
     # Prepare chart data
@@ -339,6 +347,15 @@ def generate_html_output(
             text-align: center;
         }}
 
+        .sub-section-title {{
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-top: 20px;
+            margin-bottom: 15px;
+            color: #333;
+            text-align: center;
+        }}
+
         table {{
             width: 100%;
             border-collapse: collapse;
@@ -452,23 +469,30 @@ def generate_html_output(
 
         {'<div class="chart-container animate-in" style="margin-bottom: 30px;"><div class="chart-title">Gastos das Categorias por Mês</div><div id="categoriesChart"></div></div>' if categories_data else ""}
 
-        <h2 class="section-title animate-in">Resumo por Categoria</h2>
-        <div class="table-container animate-in">
-            {generate_summary_table(summary_type_df, category_tags)}
-        </div>
-
-        <h2 class="section-title animate-in">Top Locais de Compra</h2>
-        <div class="table-container animate-in">
-            {generate_locations_table(summary_local_df)}
-        </div>
-
-        <h2 class="section-title animate-in">Análise de Parcelas</h2>
-        <div class="table-container animate-in">
-            {generate_installments_table(tot_avista_val, tot_parcelados_val, tot_fin_val, len(tot_avista.data) if not tot_avista.data.empty else 0, len(tot_parcelados.data) if not tot_parcelados.data.empty else 0, len(tot_fin.data) if not tot_fin.data.empty else 0)}
+        <h2 class="section-title animate-in">Análises Detalhadas</h2>
+        <div class="chart-grid animate-in">
+            <div class="table-container">
+                <h4 class="sub-section-title">Resumo por Categoria</h4>
+                {generate_summary_table(summary_type_df, category_tags)}
+            </div>
+            <div class="table-container">
+                <h4 class="sub-section-title">Top Locais de Compra</h4>
+                {generate_locations_table(summary_local_df)}
+            </div>
+            <div class="table-container">
+                <h4 class="sub-section-title">Análise de Parcelas</h4>
+                {generate_installments_table(tot_avista_val, tot_parcelados_val, tot_fin_val, tot_recorrente_val, len(tot_avista.data) if not tot_avista.data.empty else 0, len(tot_parcelados.data) if not tot_parcelados.data.empty else 0, len(tot_fin.data) if not tot_fin.data.empty else 0, tot_recorrente_qty)}
+            </div>
+            <div class="table-container">
+                <h4 class="sub-section-title">Detalhe de Parcelas</h4>
+                {generate_parcelas_breakdown_table(file)}
+            </div>
         </div>
 
         <h2 class="section-title animate-in">Top Gastos por Categoria</h2>
-        {generate_top_expenses_by_category(file, summary_type_df)}
+        <div class="chart-grid animate-in">
+            {generate_top_expenses_by_category(file, summary_type_df)}
+        </div>
     </div>
 
     <script>
@@ -625,16 +649,10 @@ def generate_summary_table(summary_df, category_tags):
                 <th>Categoria</th>
                 <th>Quantidade</th>
                 <th>Valor Total</th>
-                <th>Valor Médio</th>
-                <th>% do Total</th>
             </tr>
         </thead>
         <tbody>
     """
-
-    total_value = (
-        summary_df["tot_value"].sum() if "tot_value" in summary_df.columns else 1
-    )
 
     for _, row in summary_df.iterrows():
         if row.get("type", "") != "total":
@@ -642,16 +660,12 @@ def generate_summary_table(summary_df, category_tags):
             tag_class = category_tags.get(category.lower(), "tag-outros")
             quantity = row.get("qtd", 0)
             tot_value = row.get("tot_value", 0)
-            avg_value = tot_value / quantity if quantity > 0 else 0
-            percentage = (tot_value / total_value * 100) if total_value > 0 else 0
 
             html += f"""
             <tr>
                 <td><span class="category-tag {tag_class}">{category.title()}</span></td>
                 <td>{quantity}</td>
                 <td class="currency">R$ {tot_value:,.2f}</td>
-                <td class="currency">R$ {avg_value:,.2f}</td>
-                <td>{percentage:.1f}%</td>
             </tr>
             """
 
@@ -671,7 +685,6 @@ def generate_locations_table(locations_df):
                 <th>Local</th>
                 <th>Quantidade</th>
                 <th>Valor Total</th>
-                <th>Valor Médio</th>
             </tr>
         </thead>
         <tbody>
@@ -681,14 +694,12 @@ def generate_locations_table(locations_df):
         local = row.get("local", "N/A")
         quantity = row.get("qtd", 0)
         tot_value = row.get("tot_value", 0)
-        avg_value = tot_value / quantity if quantity > 0 else 0
 
         html += f"""
         <tr>
             <td>{local}</td>
             <td>{quantity}</td>
             <td class="currency">R$ {tot_value:,.2f}</td>
-            <td class="currency">R$ {avg_value:,.2f}</td>
         </tr>
         """
 
@@ -697,7 +708,14 @@ def generate_locations_table(locations_df):
 
 
 def generate_installments_table(
-    avista_val, parcelado_val, finalizado_val, avista_qty, parcelado_qty, finalizado_qty
+    avista_val,
+    parcelado_val,
+    finalizado_val,
+    recorrente_val,
+    avista_qty,
+    parcelado_qty,
+    finalizado_qty,
+    recorrente_qty,
 ):
     """Generate installments analysis table"""
     html = """
@@ -707,7 +725,6 @@ def generate_installments_table(
                 <th>Tipo</th>
                 <th>Quantidade</th>
                 <th>Valor Total</th>
-                <th>Valor Médio</th>
             </tr>
         </thead>
         <tbody>
@@ -717,18 +734,121 @@ def generate_installments_table(
         ("À Vista", avista_qty, avista_val),
         ("Parcelado (Em andamento)", parcelado_qty, parcelado_val),
         ("Parcelado (Finalizado)", finalizado_qty, finalizado_val),
+        ("Recorrente", recorrente_qty, recorrente_val),
     ]
 
-    for tipo, quantity, total_value in installment_data:
-        avg_value = total_value / quantity if quantity > 0 else 0
+    total_qty = 0
+    total_value = 0
+
+    for tipo, quantity, total_value_row in installment_data:
         html += f"""
         <tr>
             <td>{tipo}</td>
             <td>{quantity}</td>
-            <td class="currency">R$ {total_value:,.2f}</td>
-            <td class="currency">R$ {avg_value:,.2f}</td>
+            <td class="currency">R$ {total_value_row:,.2f}</td>
         </tr>
         """
+        total_qty += quantity
+        total_value += total_value_row
+
+    html += f"""
+        <tr style="font-weight: bold; background-color: #f0f0f0;">
+            <td>Total</td>
+            <td>{total_qty}</td>
+            <td class="currency">R$ {total_value:,.2f}</td>
+        </tr>
+    """
+
+    html += "</tbody></table>"
+    return html
+
+
+def generate_parcelas_breakdown_table(file):
+    """Generates a table showing the breakdown of parcelas (installments)."""
+    df = file._df.copy()
+
+    # Filter out recurrent transactions for this breakdown
+    df_non_recurrent = df[df["type"] != "recorrente"].copy()
+
+    if df_non_recurrent.empty:
+        return "<p>Dados de parcelas não disponíveis</p>"
+
+    # Create a 'parcelas_display' column based on parcelas_faltantes
+    def get_parcela_display_simplified(row):
+        if row["parcelas_faltantes"] == 0 and row["parcelas_totais"] == 0:
+            return "À vista"
+        else:
+            return f"{row['parcelas_faltantes']} restantes"
+
+    df_non_recurrent["parcelas_display"] = df_non_recurrent.apply(
+        get_parcela_display_simplified, axis=1
+    )
+
+    # Group by the new display column
+    parcelas_summary = (
+        df_non_recurrent.groupby(["parcelas_faltantes", "parcelas_display"])
+        .agg(qtd=("valor", "size"), tot_value=("valor", "sum"))
+        .reset_index()
+    )
+
+    # Custom sort for 'À vista' first, then numerically by remaining installments
+    def custom_sort_key_simplified(parcela_str):
+        if parcela_str == "À vista":
+            return (0, 0)
+        elif parcela_str.startswith("Parcelado ("):
+            try:
+                # Extract number of remaining installments
+                num_remaining_str = parcela_str.split("(")[1].split(" ")[0]
+                num_remaining = int(num_remaining_str)
+                return (1, num_remaining)
+            except ValueError:
+                return (1, 999)  # Fallback for unparseable
+        else:
+            return (2, 0)  # For "Outros" or anything else
+
+    parcelas_summary["sort_key"] = parcelas_summary["parcelas_display"].apply(
+        custom_sort_key_simplified
+    )
+    parcelas_summary = parcelas_summary.sort_values(by="sort_key").drop(
+        columns="sort_key"
+    )
+
+    html = """
+    <table>
+        <thead>
+            <tr>
+                <th>Tipo de Parcela</th>
+                <th>Quantidade</th>
+                <th>Valor Parcela</th>
+            </tr>
+        </thead>
+        <tbody>
+    """
+    total_qty = 0
+    total_value = 0
+
+    for _, row in parcelas_summary.iterrows():
+        tipo_parcela = row.get("parcelas_display", "N/A")
+        quantity = row.get("qtd", 0)
+        tot_value = row.get("tot_value", 0)
+
+        html += f"""
+        <tr>
+            <td>{tipo_parcela}</td>
+            <td>{quantity}</td>
+            <td class="currency">R$ {tot_value:,.2f}</td>
+        </tr>
+        """
+        total_qty += quantity
+        total_value += tot_value
+
+    html += f"""
+        <tr style="font-weight: bold; background-color: #f0f0f0;">
+            <td>Total</td>
+            <td>{total_qty}</td>
+            <td class="currency">R$ {total_value:,.2f}</td>
+        </tr>
+    """
 
     html += "</tbody></table>"
     return html
@@ -749,15 +869,13 @@ def generate_top_expenses_by_category(file, summary_df):
                         tp_value = tp_data_selected.data.valor.sum()
 
                         html += f"""
-                        <div class="table-container animate-in">
-                            <h4>Top Gastos {tp.title()}: {qtd_compras} compras - R$ {tp_value:,.2f}</h4>
+                        <div class="table-container">
+                            <h4 class="sub-section-title">Top Gastos {tp.title()}: {qtd_compras} compras - R$ {tp_value:,.2f}</h4>
                             <table>
                                 <thead>
                                     <tr>
-                                        <th>Descrição</th>
                                         <th>Local</th>
                                         <th>Valor</th>
-                                        <th>Data</th>
                                         <th>Parcelas</th>
                                     </tr>
                                 </thead>
@@ -772,12 +890,10 @@ def generate_top_expenses_by_category(file, summary_df):
                         )
 
                         for _, expense_row in top_expenses.head(10).iterrows():
-                            desc = expense_row.get("type", "N/A")
+                            # 'type' column is used for description, 'local' for local, etc.
+                            # Assuming 'type' in expense_row refers to the transaction description, not category type
                             local = expense_row.get("local", "N/A")
                             valor = expense_row.get("valor", 0)
-                            data = expense_row.get("data", "N/A")
-                            if data != "N/A":
-                                data = data.strftime("%d/%m/%Y")
 
                             parcela = expense_row.get("parcela", 0)
                             parcelas_faltantes = expense_row.get(
@@ -792,10 +908,8 @@ def generate_top_expenses_by_category(file, summary_df):
 
                             html += f"""
                             <tr>
-                                <td>{desc}</td>
                                 <td>{local}</td>
                                 <td class="currency">R$ {valor:,.2f}</td>
-                                <td>{data}</td>
                                 <td>{parcelas_info}</td>
                             </tr>
                             """

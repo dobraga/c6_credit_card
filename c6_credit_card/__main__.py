@@ -25,7 +25,6 @@ filterwarnings(action="ignore", category=UserWarning)
     help="Pasta com arquivos das faturas",
     prompt="Pasta com arquivos das faturas",
 )
-@click.option("--index", "-i", default=None, type=int)
 @click.option("--verbose", "-v", is_flag=True, help="Print more output.")
 @click.option("--force", "-f", is_flag=True, help="Force extract.")
 @click.option(
@@ -35,15 +34,12 @@ filterwarnings(action="ignore", category=UserWarning)
     default="html",
     help="Output format.",
 )
-def main(pasta, index, verbose, force, output_format):
+def main(pasta, verbose, force, output_format):
     """Explore credit card bills from C6 in terminal."""
-    if index:
-        index = index - 1
-
     setup(verbose)
     LOG.info(f"Output format selected: {output_format}")
     files = read_files(pasta, force)
-    file = files[index]
+    file = files[-1]
 
     LOG.info(f"using {file}")
 
