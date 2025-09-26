@@ -3,16 +3,18 @@
         "uber": ["uber"],
         "amazon": ["amazon"],
         "99app": ["99", "pop"],
-        "aliexpress": ["aliexpress", "ec alipaybrasil"],
+        "aliexpress": ["aliexpress", "ec alipaybrasil", "dlalipay alipay"],
         "outback": ["outback"],
         "mundial": ["mercadolivre qrmundia"],
         "growth": ["mercadolivre growthsu"],
-        "mercadolivre": ["mercadolivre.+"],
+        "mercadolivre": ["mercadolivre.+", "mercadopago.+"],
+        "walita": ["pg infracommerce"],
         "c6 store": ["pg ll"],
         "light": ["flexpag light"],
         "ze delivery": ["dark store", "pg ze"],
         "ifood": ["ifood", "^ifd.+"],
-        "shopee": ["shopee"]
+        "shopee": ["shopee"],
+        "sofa": ["renata per"]
     },
     "mapping": {
         "saúde": [
@@ -31,7 +33,11 @@
             "soldiersnutriti",
             "drogasmil",
             "avena",
-            "itc vertebral"
+            "itc vertebral",
+            "sua academia",
+            "ativafit",
+            "totalpass",
+            "gympass"
         ],
         "lazer": [
             "sympla",
@@ -55,7 +61,6 @@
             "escalada",
             "latam air",
             "localiza",
-            "bagaggio",
             "ticket",
             "instituto inhotim",
             "produtos globo"
@@ -201,7 +206,12 @@
             "rapa tacho",
             "mangai",
             "panificadora",
-            "gelateria"
+            "gelateria",
+            "chocolate",
+            "prezunic",
+            "mundo verde",
+            "vo alzira",
+            "eymiguelote"
         ],
         "recorrente": [
             "claro",
@@ -221,10 +231,7 @@
             "meli",
             "ifoodbrclube",
             "net pgt",
-            "sua academia",
-            "totalpass",
-            "ativafit",
-            "totalpass",
+
             "dmhelpmax",
             "pg oi",
             "ativa fit",
@@ -283,7 +290,11 @@
             "crown",
             "crocs",
             "cacula",
-            "lj12"
+            "lj12",
+            "daiso",
+            "walita",
+            "bagaggio",
+            "sofa"
         ],
         "transporte": [
             "99app",
@@ -291,14 +302,18 @@
             "metro",
             "autoviacao",
             "buser",
-            "riocard"
+            "riocard",
+            "gol linhas"
         ],
         "inv": [
             "openai",
             "facebook",
             "google",
             "kiwify",
-            "hostinger"
+            "hostinger",
+            "udacity",
+            "cambly",
+            "comfyorg"
         ],
         "remove": [
             "inclusao pagamento",
