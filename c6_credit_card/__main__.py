@@ -34,7 +34,19 @@ filterwarnings(action="ignore", category=UserWarning)
     default="html",
     help="Output format.",
 )
-def main(pasta, verbose, force, output_format):
+@click.option(
+    "--past-months",
+    type=int,
+    default=3,
+    help="Number of past months to display.",
+)
+@click.option(
+    "--future-months",
+    type=int,
+    default=6,
+    help="Number of future months to display.",
+)
+def main(pasta, verbose, force, output_format, past_months, future_months):
     """Explore credit card bills from C6 in terminal."""
     setup(verbose)
     LOG.info(f"Output format selected: {output_format}")
@@ -44,7 +56,9 @@ def main(pasta, verbose, force, output_format):
     LOG.info(f"using {file}")
 
     # Generate all plot data by calling service functions
-    ys_next_months, xs_next_months = plot_next_months(file)
+    ys_next_months, xs_next_months = plot_next_months(
+        files, file, past_months, future_months
+    )
     ys_data_total, xs_data_total = plot_data_total(files)
     ys_data_type, xs_data_type, tps_data_type = plot_data_type(files)
     # plot_gastos_por_dia_data = plot_gastos_por_dia(file) # If needed for output functions

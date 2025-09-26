@@ -145,7 +145,7 @@ def generate_html_output(
 
     # Prepare chart data
     next_months_data = {
-        "x": xs_next_months if xs_next_months else [],
+        "x": [x.strftime("%Y-%m-%d") for x in xs_next_months] if xs_next_months else [],
         "y": ys_next_months if ys_next_months else [],
     }
 
@@ -563,7 +563,7 @@ def generate_html_output(
                     size: 8
                 }}
             }};
-            Plotly.newPlot('nextMonthsChart', [nextMonthsTrace], layout, config);
+            Plotly.newPlot('nextMonthsChart', [nextMonthsTrace], layout_date, config);
         }}
 
         if (monthlyData.x && monthlyData.x.length > 0) {{

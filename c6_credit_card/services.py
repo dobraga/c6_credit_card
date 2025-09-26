@@ -26,39 +26,69 @@ def plot_data_total(files: Files):
     return ys, xs
 
 
-def plot_next_months(file: File):
+def plot_next_months(
+    files: Files, file: File, past_months: int = 3, future_months: int = 6
+):
+    """
+    Prepares data for plotting spending for past and future months.
+
+    :param files: A Files object containing all processed credit card bills.
+    :param file: The latest File object, used for calculating future installments.
+    :param past_months: The number of past months to include in the plot.
+    :param future_months: The number of future months to project.
+    :return: A tuple containing lists of y-values (spending) and x-values (months).
+    """
+    # --- Past Months Data ---
+    # Get historical spending data from all files
+    all_months_data = files.summary_all().reset_index().sort_values("month")
+    last_month = all_months_data["month"].max()
+
+    # Filter for the desired number of past months
+    past_data = all_months_data[
+        all_months_data["month"]
+        <= pd.to_datetime(last_month).to_period("M").to_timestamp()
+    ].tail(past_months)
+
+    # --- Future Months Data ---
+    # Calculate recurring costs and installments from the latest bill
     recorrentes = file._df.query('type == "recorrente"').valor.sum()
     parcelas = (
         file._df.query("parcela > 0 and parcelas_faltantes > 0")
         .groupby("parcelas_faltantes")["valor"]
         .sum()
     )
-
     parcelas = parcelas.sort_index(ascending=False).cumsum().sort_index()
 
+    # Backfill to get a dense series of future cumulative debt
     if not parcelas.empty:
-        max_index = parcelas.index.max()
-    else:
-        max_index = 0
+        full_index = np.arange(1, parcelas.index.max() + 1)
+        parcelas = parcelas.reindex(full_index).bfill()
 
-    arr = np.full(max_index + 1, np.nan)
+    # Calculate future values for each month
+    future_values = []
+    for i in range(1, future_months + 1):
+        installment_value = parcelas.get(i, 0)
+        future_values.append(installment_value + recorrentes)
 
-    for idx, value in parcelas.items():
-        arr[idx] = value
+    # Create a date-indexed series for future data
+    future_dates = pd.date_range(
+        start=last_month + pd.DateOffset(months=1),
+        periods=future_months,
+        freq="MS",
+    )
+    future_data = pd.Series(future_values, index=future_dates)
 
-    parcelas = pd.Series(arr[1:], name="parcelas_faltantes").ffill().fillna(0)
+    # --- Combine Data ---
+    # Format past data for concatenation
+    past_df = past_data.rename(columns={"month": "date", "tot_value": "value"})
+    past_df = past_df.set_index("date")["value"]
 
-    parcelas_rec = parcelas + recorrentes
+    # Combine past and future data into a single series
+    combined_data = pd.concat([past_df, future_data])
 
-    # print(f"total parcelas: R${parcelas.sum():,.2f} | recorrente: R${recorrentes:,.2f}")
-    # print(
-    #     pd.DataFrame(
-    #         {"parcelas": parcelas, "recorrente": recorrentes, "total": parcelas_rec}
-    #     )
-    # )
+    ys = combined_data.values.tolist()
+    xs = combined_data.index.tolist()
 
-    ys = parcelas_rec.values.tolist()
-    xs = parcelas_rec.index.tolist()
     return ys, xs
 
 

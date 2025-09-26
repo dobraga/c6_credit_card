@@ -81,64 +81,68 @@ def test_plot_data_total_with_data():
     assert xs == ['2023-01', '2023-02', '2023-03']
 
 
-def test_plot_next_months_basic():
-    """Test plot_next_months with basic data."""
-    # Sample DataFrame for a MockFile
-    df_data = pd.DataFrame({
-        'type': ['compra', 'recorrente', 'parcela', 'parcela'],
-        'valor': [50, 30, 100, 100],
-        'parcela': [0, 0, 1, 2], # parcela 1 de 2, parcela 2 de 2
-        'parcelas_faltantes': [0, 0, 1, 0] # 1 parcela restante for first, 0 for second
+def test_plot_next_months_with_past_and_future():
+    """Test plot_next_months with both past and future data."""
+    # --- Mocking Setup ---
+    # 1. Mock `files` object with historical data
+    mock_files = MockFiles()
+    summary_df = pd.DataFrame({
+        'month': pd.to_datetime(['2023-01-01', '2023-02-01', '2023-03-01']),
+        'tot_value': [100, 200, 150]
     })
-    mock_file = MockFile(df_data=df_data)
-    
-    # Expected: recorrentes = 30
-    # Parcelas:
-    # Parcela 1 (valor 100, faltantes 1): this is the one that counts for future.
-    # max_index = 1
-    # arr = [nan, 100.0]
-    # parcelas series = [100.0] (index 0, representing 1 month from now)
-    # parcelas_rec = [130.0]
-    
-    ys, xs = plot_next_months(mock_file)
-    
-    # Based on the logic in services.py:
-    # recorrentes = 30
-    # parcelas = series with value 100 at index 0 (representing 1 month from now)
-    # parcelas_rec = 100 + 30 = 130
-    # ys = [130.0], xs = [0] (if index is 0-based for months from now)
-    # The `plot_next_months` function in services.py has:
-    # parcelas = pd.Series(arr[1:], name="parcelas_faltantes").ffill().fillna(0)
-    # xs = parcelas_rec.index.tolist()
-    # If max_index is 1, arr[1:] is [100.0]. Index will be [0].
-    
-    assert ys == [130.0]
-    assert xs == [0] # Index of the series, representing months from now
+    mock_files.summary_all = MagicMock(return_value=summary_df)
 
-def test_plot_next_months_no_future_parcels():
-    df_data = pd.DataFrame({
+    # 2. Mock `file` object (latest bill) for future projections
+    latest_bill_df = pd.DataFrame({
+        'type': ['compra', 'recorrente', 'parcela'],
+        'valor': [50, 30, 120],  # 30 for recorrente
+        'parcela': [0, 0, 1],
+        'parcelas_faltantes': [0, 0, 1]  # 1 remaining installment of 120
+    })
+    mock_file = MockFile(df_data=latest_bill_df)
+
+    # --- Call the function ---
+    ys, xs = plot_next_months(mock_files, mock_file, past_months=3, future_months=2)
+
+    # --- Assertions ---
+    # Past: [100, 200, 150]
+    # Future: [120 (parcela) + 30 (recorrente), 0 (parcela) + 30 (recorrente)] = [150, 30]
+    expected_ys = [100, 200, 150, 150.0, 30.0]
+    expected_xs = pd.to_datetime(['2023-01-01', '2023-02-01', '2023-03-01', '2023-04-01', '2023-05-01'])
+
+    assert ys == expected_ys
+    assert xs == expected_xs.tolist()
+
+
+def test_plot_next_months_no_future_parcels_with_past():
+    """Test plot_next_months with past data but no future installments."""
+    # --- Mocking Setup ---
+    mock_files = MockFiles()
+    summary_df = pd.DataFrame({
+        'month': pd.to_datetime(['2023-01-01', '2023-02-01', '2023-03-01']),
+        'tot_value': [100, 200, 150]
+    })
+    mock_files.summary_all = MagicMock(return_value=summary_df)
+
+    latest_bill_df = pd.DataFrame({
         'type': ['compra', 'recorrente'],
         'valor': [50, 30],
         'parcela': [0, 0],
         'parcelas_faltantes': [0, 0]
     })
-    mock_file = MockFile(df_data=df_data)
-    ys, xs = plot_next_months(mock_file)
+    mock_file = MockFile(df_data=latest_bill_df)
 
-    # recorrentes = 30. No parcelas_faltantes > 0.
-    # max_index will be 0 (due to `if parcelas.keys() else 0`)
-    # arr = [nan]
-    # parcelas = pd.Series(arr[1:]...) will be an empty series
-    # parcelas.fillna(0) will still be empty
-    # parcelas_rec = empty_series + 30 = series of [30.0] if using broadcasting rules for empty series, or might error.
-    # The code has `parcelas = pd.Series(arr[1:], name="parcelas_faltantes").ffill().fillna(0)`
-    # If arr[1:] is empty, pd.Series([]) + 30 is tricky.
-    # If max_index = 0, arr = [np.nan]. arr[1:] is empty. pd.Series([], name="parcelas_faltantes", dtype=float64)
-    # parcelas_rec = pd.Series([], dtype=float64) + 30 = pd.Series([], dtype=float64)
-    # So ys and xs should be empty.
-    assert ys == [] # This depends on how pandas handles Series + scalar with empty series.
-                     # If parcelas_rec remains empty, then .values.tolist() is []
-    assert xs == []
+    # --- Call the function ---
+    ys, xs = plot_next_months(mock_files, mock_file, past_months=2, future_months=2)
+
+    # --- Assertions ---
+    # Past (2 months): [200, 150]
+    # Future: [30 (recorrente), 30 (recorrente)]
+    expected_ys = [200, 150, 30.0, 30.0]
+    expected_xs = pd.to_datetime(['2023-02-01', '2023-03-01', '2023-04-01', '2023-05-01'])
+
+    assert ys == expected_ys
+    assert xs == expected_xs.tolist()
 
 def test_plot_data_type_basic():
     mock_files = MockFiles()
@@ -159,7 +163,7 @@ def test_plot_data_type_basic():
     
     ys, xs, tps = plot_data_type(mock_files)
 
-    assert tps == ['food', 'other', 'transport'] # Order might vary based on groupby and sort
+    assert set(tps) == {'food', 'other', 'transport'}
     
     # Check if transport is one of the types
     assert 'transport' in tps
